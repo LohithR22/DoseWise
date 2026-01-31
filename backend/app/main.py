@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.routes import router
 
 app = FastAPI(title="DoseWise Backend")
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,12 +13,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routes
 app.include_router(router)
+
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
 
 if __name__ == "__main__":
     import uvicorn

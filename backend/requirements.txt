@@ -1,8 +1,29 @@
+# ------------------------
+# Core API & Server
+# ------------------------
 fastapi==0.104.1
 uvicorn==0.24.0
+
+# ------------------------
+# Validation & Settings
+# ------------------------
 pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# ------------------------
+# Agent Framework (ONLY this)
+# ------------------------
 langgraph==0.0.35
-langchain==0.1.0
-python-dotenv==1.0.0
+
+# ------------------------
+# HTTP & Async
+# ------------------------
+httpx==0.25.2
 aiohttp==3.9.1
-sqlalchemy==2.0.23
+
+# ------------------------
+# Config & Utilities
+# ------------------------
+python-dotenv==1.0.0
+python-multipart==0.0.6
+loguru==0.7.2
