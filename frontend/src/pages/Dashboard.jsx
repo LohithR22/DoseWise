@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 import PillCard from '../components/PillCard';
 import ReminderModal from '../components/ReminderModal';
-import InventoryStatus from '../components/InventoryStatus';
 import ActionLog from '../components/ActionLog';
 
 // Helper to construct image URL
@@ -331,10 +330,7 @@ export default function Dashboard() {
             </form>
           </div>
 
-          <div className="inventory-section mb-4">
-            <h2>Inventory Status</h2>
-            <InventoryStatus inventory={inventory} />
-          </div>
+
 
           <div className="action-log-section">
             <h2>Recent Activity</h2>

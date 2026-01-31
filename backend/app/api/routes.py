@@ -217,6 +217,25 @@ async def run_agent(body: AgentRunRequest | None = Body(None)) -> dict:
     return resp
 
 
+@router.delete("/medications/{name}")
+async def delete_medication(name: str) -> dict:
+    """DELETE /medications/{name}: remove a medication from the system."""
+    state = load_state()
+    
+    # Remove from medications list
+    medications = state.get("medications") or []
+    new_meds = [m for m in medications if (m.get("name") or "") != name]
+    state["medications"] = new_meds
+    
+    # Remove from inventory
+    inventory = state.get("inventory") or []
+    new_inv = [i for i in inventory if (i.get("med_name") or "") != name]
+    state["inventory"] = new_inv
+    
+    save_state(state)
+    return {"status": "success", "message": f"Medication {name} deleted"}
+
+
 @router.post("/setup/medications")
 async def setup_medications(payload: MedicationSetupRequest) -> dict:
     """POST /setup/medications: full setup or edit/add. If profile exists, merge new medications only."""

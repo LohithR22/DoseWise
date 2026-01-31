@@ -185,12 +185,13 @@ export default function PillCard({ medication, onTake, isUrgent = false }) {
             align-items: start;
         }
         .pill-image-container {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: var(--radius-md);
             overflow: hidden;
             border: 1px solid var(--border-color);
             background: #f8fafc;
+            flex-shrink: 0;
         }
         .pill-image {
             width: 100%;

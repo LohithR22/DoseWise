@@ -20,9 +20,16 @@ def calculate_adherence_rate(
     
     # Count medications with last_taken_at in the period
     now = datetime.now()
-    cutoff = now - timedelta(days=days)
+    # Use 36h window to allow for next-morning review of last night's dose
+    cutoff = now - timedelta(hours=36)
     
-    total_expected = len(medications) * days  # Simplified: assume 1 dose per day per med
+    # Limitation: We currently only track last_taken_at, so we can only accurately calculate
+    # adherence for the immediate past. Calculating for >1 day incorrectly penalizes
+    # because we don't store a full history log.
+    # We fix the window to 1 day for calculation purposes until dose history is implemented.
+    calculation_days = 1 
+    
+    total_expected = len(medications) * calculation_days
     total_taken = 0
     by_medication = {}
     

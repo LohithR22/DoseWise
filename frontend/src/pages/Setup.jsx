@@ -98,6 +98,26 @@ export default function Setup() {
     });
   };
 
+  const handleRemoveMedication = async (index) => {
+    const medToRemove = formData.medications[index];
+    if (hasExistingProfile && medToRemove.name) {
+      if (window.confirm(`Are you sure you want to delete ${medToRemove.name}? This cannot be undone.`)) {
+        try {
+          await api.deleteMedication(medToRemove.name);
+        } catch (error) {
+          console.error('Failed to delete medication from backend', error);
+          alert('Could not delete from backend, but removing from list.');
+        }
+      } else {
+        return;
+      }
+    }
+    setFormData((prev) => ({
+      ...prev,
+      medications: prev.medications.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -190,7 +210,18 @@ export default function Setup() {
           <p className="form-hint">Add times to take (e.g. 8am, 8pm) and whether before/after food.</p>
           {formData.medications.map((med, index) => (
             <div key={index} className="medication-entry">
-              <h4>Medication {index + 1}</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h4 style={{ margin: 0 }}>Medication {index + 1}</h4>
+                {formData.medications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMedication(index)}
+                    style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
               <div className="grid-2">
                 <input
                   type="text"

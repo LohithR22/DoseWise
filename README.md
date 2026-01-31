@@ -6,278 +6,93 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18.2+-61dafb.svg)](https://reactjs.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Latest-orange.svg)](https://github.com/langchain-ai/langgraph)
+[![Gemini](https://img.shields.io/badge/AI-Google%20Gemini-blueviolet?style=flat-square&logo=google)](https://deepmind.google/technologies/gemini/)
 
 ---
 
-## Overview
+## 🚀 Overview
 
-DoseWise is an **agentic AI system** designed to autonomously manage daily medication routines for elderly and chronically ill patients. Unlike reminder apps or chatbots, DoseWise **observes, reasons, plans, and acts** on its own to ensure the right medicine is taken at the right time — while proactively managing inventory, health signals, and caregiver alerts.
+**DoseWise** is an **Agentic AI System** designed to autonomously manage daily medication routines, specifically tailored for the elderly and those with chronic conditions. 
 
----
+Unlike traditional Reminder Apps (which are reactive), DoseWise is **Proactive**. It functions as a digital caretaker that **Observes** the patient's state, **Reasons** about health risks and inventory, **Plans** interventions, and **Acts** autonomously to ensure adherence and safety.
 
-## 🚨 Problem Statement
-
-Millions of elderly patients take multiple medications daily for chronic conditions such as:
-
-- **Heart disease**
-- **Diabetes**
-- **Urology-related issues**
-
-### Challenges They Face:
-
-- ❌ Identifying the correct medicine
-- ❌ Remembering dosage and timing
-- ❌ Tracking remaining pills
-- ❌ Reordering medicines on time
-- ❌ Monitoring basic health vitals consistently
-
-> **Critical Issue:** Missed or incorrect medication intake can lead to serious health risks.
+key Differentiator: **It doesn't just nag you to take a pill; it understands *why* you need it and manages everything around it.**
 
 ---
 
-## 💡 Solution Overview
+## 🏗️ System Architecture & Technical Implementation
 
-DoseWise acts as a **digital caretaker** — an autonomous AI agent that continuously monitors medication schedules and patient interactions, makes decisions, and takes actions with minimal human input.
+At the core of DoseWise is a **Stateful Cognitive Architecture** powered by **LangGraph**. The system does not run on simple if-then rules but uses a continuous control loop that mimics human decision-making.
 
-### Key Principles
+### The Agentic Loop (Observe-Reason-Plan-Act)
 
-- ✅ **Agentic** (not reactive)
-- ✅ **Goal-driven**
-- ✅ **Explainable decisions**
-- ✅ **Designed for real-world use**
-- ✅ **No medical diagnosis or prescription**
+The backend (`backend/app/agent`) implements a graph-based state machine:
 
-> ⚠️ **Disclaimer:** DoseWise does not prescribe medication. It strictly follows doctor-prescribed schedules provided during setup.
+1.  **🔍 Observer Node**:
+    - Continuously ingests real-time data: Current time, Medication schedules, Pill inventory, and Vitals.
+    - Serves as the system's "eyes," aggregating context into a unified state.
 
----
+2.  **🧠 Reasoning Node**:
+    - Uses **Google Gemini** (LLM) to analyze the observed state.
+    - Determines semantic context: "Is the patient late explicitly or just busy?", "Is the inventory critically low given the dosage frequency?"
+    - **Risk Assessment**: Uses `risk_assessor.py` to calculate health risks based on vitals trends.
 
-## 🧠 Agentic Architecture
+3.  **🗺️ Planner Node**:
+    - Formulates a sequence of actions.
+    - Example Plan: *Notify User -> If no response in 15 mins -> Escalate to Caregiver -> Check Inventory.*
+    - Adapts plans dynamically if the user's state changes (e.g., they take the pill mid-calculation).
 
-DoseWise operates in a continuous loop:
+4.  **⚡ Action Node**:
+    - Executes the plan:
+        - triggers Push Notifications (via Frontend).
+        - Initiates Reorder capability (`backend/app/reorder`).
+        - Logs health data (`backend/app/health`).
 
-```
-Observe → Reason → Plan → Act → Verify → Learn
-```
-
-### Core Goal
-
-> *"Ensure the patient takes the correct medicine, in the correct dosage, at the correct time — and proactively handle shortages and health signals."*
-
----
-
-## 📁 Project Structure
-
-```
-dosewise/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                  # FastAPI entry point
-│   │   ├── api/                     # REST routes & schemas
-│   │   ├── agent/                   # LangGraph agent logic
-│   │   │   ├── graph.py              # Agent graph definition
-│   │   │   ├── state.py              # Agent state schema
-│   │   │   ├── observer.py           # Observe node
-│   │   │   ├── reasoning.py          # Reason node
-│   │   │   ├── planner.py            # Plan node
-│   │   │   └── action.py             # Act node
-│   │   ├── medication/              # Medication logic
-│   │   ├── health/                  # Vitals & trend analysis
-│   │   ├── reorder/                 # Reorder & pharmacy search
-│   │   ├── notifications/           # Reminders & escalation
-│   │   └── storage/                 # Persistent agent state
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/                   # Dashboard, Setup, Caregiver
-│   │   ├── components/              # UI components
-│   │   ├── services/                # API client
-│   │   └── App.jsx
-│   └── package.json
-│
-└── README.md
-```
-
----
-
-## 🤖 Agent Responsibilities
-
-### 🔍 Observer Agent
-- Tracks time, medication schedules, and missed doses
-- Monitors pill inventory and health vitals
-
-### 🧠 Reasoning Agent
-- Determines if a dose is missed
-- Detects low inventory
-- Identifies abnormal health trends
-
-### 🗺️ Planner Agent
-Decides next best actions:
-- Send reminder
-- Escalate to caregiver
-- Initiate medicine reorder
-- Suggest doctor consultation
-
-### ⚡ Action Agent
-- Sends reminders (UI / notifications)
-- Displays pill image, dosage & instructions
-- Triggers reorder flow
-- Logs every action for transparency
+### 🧠 Intelligence Layer
+Located in `backend/app/intelligence`, this module separates DoseWise from basic apps:
+-   **Trend Analysis**: `trend_analyzer.py` uses statistical methods to detect drifts in blood pressure or weight over time.
+-   **LLM Explainer**: `llm_explainer.py` translates complex medical data into natural language summaries for caregivers.
+-   **Historical Analysis**: `historical_analyzer.py` looks at past adherence to predict future compliance probabilities.
 
 ---
 
 ## ✨ Key Features
 
-### 💊 Smart Medication Assistance
-- ⏰ Time-based reminders
-- 🖼️ Pill image + name + dosage
-- 📋 Instructions (before/after food)
-- 🚨 Missed-dose detection with escalation
+### Agnetic Medication Management
+-   **Context-Aware Reminders**: Doesn't just buzz; provides pill images, dosage context, and food instructions.
+-   **Missed Dose Protocols**: Automatically calculates the window of forgiveness for a missed dose and advises accordingly.
 
-### 📦 Inventory Tracking
-- 📉 Automatic pill count decrement
-- ⚠️ Low-stock alerts
-- 🔄 Proactive reorder suggestions
+### Intelligent Inventory & Supply Chain
+-   **Auto-Decrement**: Inventory updates in real-time as doses are marked taken.
+-   **Smart Reordering**: Predicts run-out dates and proactively suggests reordering from integrated pharmacy APIs.
 
-### 🛒 Medicine Reordering (Semi-Autonomous)
-- 🔍 Searches online pharmacies
-- 💰 Compares prices
-- ✅ Requests user confirmation before ordering
+### Comprehensive Health Monitoring
+-   **Vitals Tracking**: Logs Blood Pressure, Sugar, Heart Rate, and Weight.
+-   **Anomaly Detection**: Alerts caregivers if vitals deviate from the patient's personalized baseline.
 
-### 🩺 Daily Health Check-ins
-Manual input for:
-- Blood pressure
-- Blood sugar
-- Weight
-
-Includes basic trend analysis to detect anomalies.
-
-### 👨‍👩‍👧 Caregiver Visibility
-- 📊 Missed doses tracking
-- ⚠️ Inventory warnings
-- 📈 Health summaries
-
-🧪 Demo Scenario (Hackathon Flow)
-
-System detects it’s 8:00 AM
-
-Agent decides a medicine is due
-
-UI shows:
-
-Pill image
-
-Dosage
-
-Instructions
-
-User confirms intake
-
-Inventory auto-updates
-
-Agent detects low stock
-
-Reorder flow is triggered
-
-Caregiver is notified only if needed
-
-The user never asks “what next?” — the agent decides.
+### Caregiver & Doctor Dashboard
+-   **React-based Frontend**: A comprehensive dashboard showing adherence rates, inventory health, and vital trends.
+-   **Peace of Mind**: Caregivers can see *exactly* what the agent is doing and why.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technical Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Backend** | Python, FastAPI |
-| **Agent Framework** | LangGraph (LangChain) |
-| **LLM** | Gemini / OpenAI (reasoning placeholders included) |
-| **State Management** | JSON / SQLite |
-| **Frontend** | React (mobile-first design) |
+-   **Backend**: Python, FastAPI, Uvicorn (Async capabilities)
+-   **AI & Logic**: LangGraph (State management), LangChain, Google Gemini Pro (LLM)
+-   **Data Processing**: Pandas (Trend analysis), Pydantic (Data validation)
+-   **Frontend**: React.js, Tailwind CSS (Responsive Design)
+-   **Storage**: JSON-based State Store (for portability & demo speed)
 
 ---
 
-## 🚀 Setup Instructions
+## 💡 Importance & Impact
 
-### Backend
+For recruiters and engineers: This project demonstrates the shift from **Generative AI (Chatbots)** to **Agentic AI (Systems that DO things)**.
 
-```bash
-cd backend
-python -m venv venv
-
-# On Windows
-venv\Scripts\activate
-
-# On macOS/Linux
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
-uvicorn app.main:app --reload
-```
-
-The backend will be available at: `http://localhost:8000`
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend will be available at: `http://localhost:3000`
+1.  **State Management**: Handling complex, multi-turn state across long time horizons.
+2.  **Reliability**: Building guardrails around LLMs to ensure they don't hallucinate medication advice.
+3.  **Real-world Integration**: Connecting abstract reasoning (LLM) to concrete APIs (Notifications, Inventory).
 
 ---
-
-## 🧠 Why This Is Agentic (Not a Chatbot)
-
-| Aspect | DoseWise |
-|--------|----------|
-| **User-driven** | ❌ |
-| **Goal-driven** | ✅ |
-| **Autonomous actions** | ✅ |
-| **Continuous loop** | ✅ |
-| **Explainable decisions** | ✅ |
-| **Real-world impact** | ✅ |
----
-
-## 👥 Team
-
-Built by a team of **4 engineers** as part of an **Agentic AI Hackathon**, with parallel development across:
-
-- 🏗️ Agent architecture & LangGraph
-- 💊 Medication & health logic
-- 🔔 Notifications & reordering
-- 🎨 Frontend & demo experience
-
----
-
-## 🔮 Future Scope
-
-- 🎤 Voice-first interface for elderly users
-- 📸 OCR-based pill recognition
-- ⌚ Wearable integration
-- 🏥 Secure caregiver & doctor dashboards
-- 🌍 Multilingual support
-
----
-
-## 🏁 Conclusion
-
-**DoseWise is more than a reminder app** — it is an autonomous AI caretaker that reduces cognitive load, prevents mistakes, and improves daily health outcomes for those who need it most.
-
----
-
-## 📝 Next Steps
-
-1. Configure LLM API keys in `.env`
-2. Initialize medication schedules
-3. Start the agent loop
-4. Access the dashboard via the React frontend
-
----
-
 **Made with ❤️ for better elderly care**

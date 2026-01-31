@@ -42,6 +42,11 @@ const api = {
     return response.data;
   },
 
+  deleteMedication: async (name) => {
+    const response = await apiClient.delete(`/medications/${encodeURIComponent(name)}`);
+    return response.data;
+  },
+
   confirmDose: async (payload) => {
     // Determine body based on input type
     let body = {};
