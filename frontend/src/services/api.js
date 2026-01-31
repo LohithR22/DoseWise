@@ -1,58 +1,72 @@
-// FastAPI client for DoseWise frontend
+import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 const api = {
-  // Medications
+  // --- Medications & State ---
+  getCurrentState: async () => {
+    // Equivalent to get current state of medication schedule for the day
+    const response = await apiClient.get('/state');
+    return response.data;
+  },
+
   getMedications: async () => {
-    const response = await fetch(`${API_BASE_URL}/medications`);
-    return response.json();
+    const response = await apiClient.get('/medications');
+    return response.data;
   },
 
-  addMedication: async (medication) => {
-    const response = await fetch(`${API_BASE_URL}/medications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(medication),
+  confirmDose: async (medicationId) => {
+    const response = await apiClient.post(`/medications/${medicationId}/confirm`, {
+      timestamp: new Date().toISOString(),
     });
-    return response.json();
+    return response.data;
   },
 
-  // Vitals
-  getVitals: async () => {
-    const response = await fetch(`${API_BASE_URL}/vitals`);
-    return response.json();
+  // --- Setup & Config ---
+  submitSetup: async (setupData) => {
+    const response = await apiClient.post('/setup', setupData);
+    return response.data;
   },
 
-  recordVitals: async (vitals) => {
-    const response = await fetch(`${API_BASE_URL}/vitals`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(vitals),
+  // --- Vitals ---
+  submitVitals: async (vitalData) => {
+    const response = await apiClient.post('/vitals', vitalData);
+    return response.data;
+  },
+
+  getHealthTrends: async () => {
+    const response = await apiClient.get('/vitals/trends');
+    return response.data;
+  },
+
+  // --- Caregiver & Alerts ---
+  getAlerts: async () => {
+    const response = await apiClient.get('/alerts');
+    return response.data;
+  },
+
+  acknowledgeAlert: async (alertId) => {
+    const response = await apiClient.post(`/alerts/${alertId}/acknowledge`);
+    return response.data;
+  },
+
+  // --- Images ---
+  uploadMedicationImage: async (medicationId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(`/medications/${medicationId}/image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
-    return response.json();
-  },
-
-  // Reminders
-  getReminders: async () => {
-    const response = await fetch(`${API_BASE_URL}/reminders`);
-    return response.json();
-  },
-
-  snoozeReminder: async (reminderId, minutes) => {
-    const response = await fetch(`${API_BASE_URL}/reminders/${reminderId}/snooze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ minutes }),
-    });
-    return response.json();
-  },
-
-  dismissReminder: async (reminderId) => {
-    const response = await fetch(`${API_BASE_URL}/reminders/${reminderId}/dismiss`, {
-      method: 'POST',
-    });
-    return response.json();
+    return response.data;
   },
 };
 

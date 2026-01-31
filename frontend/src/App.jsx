@@ -1,23 +1,33 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Setup from './pages/Setup';
 import Caregiver from './pages/Caregiver';
 import './App.css';
 
-function App() {
-  const [user, setUser] = useState(null);
+// Navigation component to use useLocation
+function Navigation() {
+  const location = useLocation();
+  const isSetup = location.pathname === '/setup';
 
+  if (isSetup) return null;
+
+  return (
+    <nav className="app-nav">
+      <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Dashboard</Link>
+      <Link to="/caregiver" className={location.pathname === '/caregiver' ? 'active' : ''}>Caregiver</Link>
+      <Link to="/setup">⚙️ Setup</Link>
+    </nav>
+  );
+}
+
+function App() {
   return (
     <Router>
       <div className="app">
         <header className="app-header">
           <h1>DoseWise</h1>
-          <nav className="app-nav">
-            <a href="/">Dashboard</a>
-            <a href="/caregiver">Caregiver</a>
-            {user && <span className="user-name">{user.name}</span>}
-          </nav>
+          <Navigation />
         </header>
 
         <main className="app-main">
@@ -27,10 +37,6 @@ function App() {
             <Route path="/caregiver" element={<Caregiver />} />
           </Routes>
         </main>
-
-        <footer className="app-footer">
-          <p>&copy; 2025 DoseWise - Smart Medication Management</p>
-        </footer>
       </div>
     </Router>
   );

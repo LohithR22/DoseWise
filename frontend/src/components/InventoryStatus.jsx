@@ -1,54 +1,89 @@
-import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import React from 'react';
 
-export default function InventoryStatus() {
-  const [inventory, setInventory] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function InventoryStatus({ inventory = [] }) {
+  // Mock data if none provided (or for initial view)
+  const items = inventory.length > 0 ? inventory : [
+    { id: 1, name: 'Lisinopril', count: 24, total: 30, unit: 'pills' },
+    { id: 2, name: 'Metformin', count: 5, total: 60, unit: 'pills' },
+    { id: 3, name: 'Amlodipine', count: 12, total: 30, unit: 'pills' },
+  ];
 
-  useEffect(() => {
-    // TODO: Fetch inventory from API
-    setLoading(false);
-  }, []);
-
-  const handleReorderClick = (medicationId) => {
-    // TODO: Trigger reorder process
-    console.log(`Reordering medication ${medicationId}`);
+  const getStatusColor = (count, total) => {
+    const percentage = (count / total) * 100;
+    if (percentage < 20) return 'var(--danger-color)';
+    if (percentage < 40) return 'var(--accent-color)';
+    return 'var(--secondary-color)';
   };
 
-  if (loading) {
-    return <div>Loading inventory...</div>;
-  }
-
   return (
-    <div className="inventory-status">
-      <table className="inventory-table">
-        <thead>
-          <tr>
-            <th>Medication</th>
-            <th>Stock Level</th>
-            <th>Days Remaining</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {inventory.map((item) => (
-            <tr key={item.id} className={`status-${item.status}`}>
-              <td>{item.name}</td>
-              <td>{item.quantity}</td>
-              <td>{item.daysRemaining}</td>
-              <td className="status-badge">{item.status}</td>
-              <td>
-                {item.status === 'low' && (
-                  <button onClick={() => handleReorderClick(item.id)}>
-                    Reorder
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="inventory-status card">
+      <ul className="inventory-list">
+        {items.map((item) => {
+          const color = getStatusColor(item.count, item.total);
+          const percentage = (item.count / item.total) * 100;
+          const isLow = percentage < 20;
+
+          return (
+            <li key={item.id} className="inventory-item">
+              <div className="item-header">
+                <span className="item-name">{item.name}</span>
+                <span className="item-count" style={{ color: isLow ? color : 'inherit' }}>
+                  {item.count} left
+                </span>
+              </div>
+              <div className="progress-bar-bg">
+                <div
+                  className="progress-bar-fill"
+                  style={{ width: `${percentage}%`, backgroundColor: color }}
+                ></div>
+              </div>
+              {isLow && <span className="low-stock-warning">⚠️ Low Stock - Refill soon</span>}
+            </li>
+          );
+        })}
+      </ul>
+
+      <style jsx>{`
+        .inventory-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .inventory-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .inventory-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .progress-bar-bg {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+        .low-stock-warning {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--danger-color);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+      `}</style>
     </div>
   );
 }
