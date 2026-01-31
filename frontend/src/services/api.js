@@ -9,11 +9,31 @@ const apiClient = axios.create({
   },
 });
 
+function deviceTimeISO() {
+  // Return ISO string with local timezone offset instead of UTC
+  const now = new Date();
+  const offset = -now.getTimezoneOffset(); // offset in minutes
+  const offsetHours = Math.floor(Math.abs(offset) / 60).toString().padStart(2, '0');
+  const offsetMinutes = (Math.abs(offset) % 60).toString().padStart(2, '0');
+  const offsetSign = offset >= 0 ? '+' : '-';
+
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  const ms = now.getMilliseconds().toString().padStart(3, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}${offsetSign}${offsetHours}:${offsetMinutes}`;
+}
+
 const api = {
-  // --- Medications & State ---
+  // --- Medications & State (device time sent so agent uses current time) ---
   getCurrentState: async () => {
-    // Equivalent to get current state of medication schedule for the day
-    const response = await apiClient.get('/state');
+    const response = await apiClient.get('/state', {
+      params: { current_time: deviceTimeISO() },
+    });
     return response.data;
   },
 
@@ -22,9 +42,20 @@ const api = {
     return response.data;
   },
 
-  confirmDose: async (medicationId) => {
-    const response = await apiClient.post(`/medications/${medicationId}/confirm`, {
-      timestamp: new Date().toISOString(),
+  confirmDose: async (payload) => {
+    // Determine body based on input type
+    let body = {};
+    if (typeof payload === 'object' && payload !== null) {
+      body = payload;
+    } else if (typeof payload === 'number') {
+      body = { medication_id: payload };
+    } else {
+      body = { medication_name: payload };
+    }
+
+    // Use the generic dose confirm endpoint
+    const response = await apiClient.post('/dose/confirm', body, {
+      params: { current_time: deviceTimeISO() },
     });
     return response.data;
   },
@@ -46,9 +77,39 @@ const api = {
     return response.data;
   },
 
-  // --- Caregiver & Alerts ---
+  // --- Caregiver & Alerts (trend-aware intelligence) ---
   getAlerts: async () => {
     const response = await apiClient.get('/alerts');
+    return response.data;
+  },
+
+  getCaregiverDashboard: async () => {
+    const [stateRes, alertsRes, trendsRes] = await Promise.all([
+      apiClient.get('/state', { params: { current_time: deviceTimeISO() } }),
+      apiClient.get('/alerts'),
+      apiClient.get('/vitals/trends'),
+    ]);
+    return {
+      profile: stateRes.data.patient_profile || {},
+      medications: stateRes.data.medications || [],
+      inventory: stateRes.data.inventory || [],
+      alerts: alertsRes.data.alerts || [],
+      trend_alerts: alertsRes.data.trend_alerts || [],
+      ai_summary: alertsRes.data.ai_summary || '',
+      severity: alertsRes.data.severity || 'low',
+      trends: trendsRes.data,
+    };
+  },
+
+  runAgent: async () => {
+    const response = await apiClient.post('/agent/run', {
+      current_time: deviceTimeISO(),
+    });
+    return response.data;
+  },
+
+  getDailyReports: async () => {
+    const response = await apiClient.get('/caregiver/daily-reports');
     return response.data;
   },
 
@@ -65,6 +126,14 @@ const api = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+    });
+    return response.data;
+  },
+
+  // --- Pharmacy Search ---
+  searchPharmacy: async (medicationName) => {
+    const response = await apiClient.post('/pharmacy/search', {
+      medication_name: medicationName
     });
     return response.data;
   },

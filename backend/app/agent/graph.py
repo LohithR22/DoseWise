@@ -25,22 +25,24 @@ def _logged_node(name: str, node_fn):
 
 
 def create_agent_graph():
-    """Create the LangGraph workflow for the DoseWise agent."""
+    """Create the LangGraph workflow for the DoseWise agent.
+    Node names must not match AgentState keys (e.g. reasoning, plan, observations).
+    """
     workflow = StateGraph(AgentState)
 
-    # Add nodes with logging
-    workflow.add_node("observer", _logged_node("observer", observe_node))
-    workflow.add_node("reasoning", _logged_node("reasoning", reason_node))
-    workflow.add_node("planner", _logged_node("planner", plan_node))
-    workflow.add_node("action", _logged_node("action", action_node))
+    # Add nodes with logging (names distinct from state keys)
+    workflow.add_node("observe", _logged_node("observe", observe_node))
+    workflow.add_node("reason", _logged_node("reason", reason_node))
+    workflow.add_node("plan_step", _logged_node("plan_step", plan_node))
+    workflow.add_node("act", _logged_node("act", action_node))
 
     # Deterministic edges: observe → reason → plan → act → observe
-    workflow.add_edge("observer", "reasoning")
-    workflow.add_edge("reasoning", "planner")
-    workflow.add_edge("planner", "action")
-    workflow.add_edge("action", "observer")
+    workflow.add_edge("observe", "reason")
+    workflow.add_edge("reason", "plan_step")
+    workflow.add_edge("plan_step", "act")
+    workflow.add_edge("act", "observe")
 
-    workflow.set_entry_point("observer")
+    workflow.set_entry_point("observe")
 
     return workflow.compile()
 

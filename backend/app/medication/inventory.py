@@ -191,6 +191,34 @@ class InventoryManager:
         
         self._inventory[med_name].low_stock_threshold = threshold
         self._inventory[med_name].last_updated = datetime.now().isoformat()
+
+    def set_quantity(self, med_name: str, quantity: int) -> int:
+        """
+        Set absolute quantity for a medication (e.g. from setup/edit).
+        
+        Args:
+            med_name: Name of the medication
+            quantity: New quantity
+            
+        Returns:
+            New quantity
+        """
+        if med_name not in self._inventory:
+            raise ValueError(f"Medication '{med_name}' not found in inventory")
+        
+        if quantity < 0:
+            raise ValueError("Quantity cannot be negative")
+            
+        item = self._inventory[med_name]
+        old_quantity = item.quantity
+        item.quantity = quantity
+        item.last_updated = datetime.now().isoformat()
+        
+        if quantity > old_quantity:
+            item.last_refilled = datetime.now().isoformat()
+            
+        self._log_transaction(med_name, "set", old_quantity, quantity, "Manual update/Setup")
+        return quantity
     
     def estimate_days_remaining(self, med_name: str, daily_consumption: int) -> Optional[int]:
         """
@@ -257,3 +285,15 @@ class InventoryManager:
         if med_name:
             return [t for t in self._transaction_log if t["med_name"] == med_name]
         return self._transaction_log.copy()
+
+
+def get_low_stock_items(user_id: str) -> List[Dict]:
+    """
+    Return low-stock items for the given user.
+    Used by reorder_agent for legacy check_inventory().
+    Inventory is managed per-request from AgentState; callers that have
+    state.inventory should use InventoryManager with that data and
+    get_low_stock_medications() instead. This returns [] when no
+    inventory context is available.
+    """
+    return []

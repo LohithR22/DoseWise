@@ -65,6 +65,107 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.taken-card {
+  opacity: 0.7;
+  border-left-color: var(--secondary-color) !important;
+}
+
+/* Urgent missed dose styles */
+.urgent-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #ef4444;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+.urgent-alert-icon {
+  font-size: 2rem;
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+.urgent-alert-content {
+  flex: 1;
+}
+
+.urgent-alert-content strong {
+  color: #dc2626;
+  font-size: 1.1rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.urgent-alert-content p {
+  color: #991b1b;
+  margin: 0;
+}
+
+.urgent-card {
+  border: 3px solid #ef4444 !important;
+  background: linear-gradient(135deg, #fff 0%, #fee2e2 100%) !important;
+  animation: pulse-glow 2s ease-in-out infinite;
+  position: relative;
+}
+
+.urgent-badge {
+  position: absolute;
+  top: -12px;
+  right: 1rem;
+  background: #ef4444;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+  animation: pulse-scale 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: #ef4444;
+  }
+  50% {
+    border-color: #dc2626;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
 .card {
   background: var(--surface-color);
   border-radius: var(--radius-lg);

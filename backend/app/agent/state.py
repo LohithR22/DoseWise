@@ -16,6 +16,11 @@ class AgentState(TypedDict, total=False):
     plan: Optional[str]
     action_log: List[dict]
     alerts: List[str]
+    # Intelligence layer: caregiver & trends
+    patient_profile: dict  # name, age, conditions
+    wellbeing_log: List[dict]  # { feeling, recorded_at }
+    trend_alerts: List[str]  # rule-based trend alerts
+    ai_summary: Optional[str]  # LLM-generated caregiver summary (no diagnosis)
 
 
 def create_initial_state(
@@ -36,4 +41,8 @@ def create_initial_state(
         "plan": None,
         "action_log": [],
         "alerts": [],
+        "patient_profile": {},
+        "wellbeing_log": [],
+        "trend_alerts": [],
+        "ai_summary": None,
     }

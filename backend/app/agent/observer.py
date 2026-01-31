@@ -1,11 +1,46 @@
 # Observe node: populate observations from current state
+# Uses current_time from device (set by API) for due/missed logic
 
 import logging
+from datetime import datetime, date, time as dt_time, timedelta
 from typing import Any
 
 from app.agent.state import AgentState
 
 logger = logging.getLogger(__name__)
+
+
+def _next_dose_at(timings: list, current_time: Any) -> datetime | None:
+    """Next scheduled dose datetime from timings and current time."""
+    if not timings or current_time is None:
+        return None
+    try:
+        if hasattr(current_time, "date"):
+            today = current_time.date()
+        else:
+            today = date.today()
+        now_min = current_time.hour * 60 + current_time.minute if hasattr(current_time, "hour") else 0
+        tz = getattr(current_time, "tzinfo", None)
+        for t in sorted(timings):
+            parts = str(t).strip().split(":")
+            h = int(parts[0]) if len(parts) >= 1 and parts[0].isdigit() else 8
+            m = int(parts[1]) if len(parts) >= 2 and parts[1].isdigit() else 0
+            t_min = h * 60 + m
+            if t_min > now_min:
+                dt = datetime.combine(today, dt_time(h, m, 0))
+                if tz:
+                    dt = dt.replace(tzinfo=tz)
+                return dt
+        first = sorted(timings)[0]
+        parts = str(first).strip().split(":")
+        h = int(parts[0]) if len(parts) >= 1 else 8
+        m = int(parts[1]) if len(parts) >= 2 else 0
+        dt = datetime.combine(today, dt_time(h, m, 0)) + timedelta(days=1)
+        if tz:
+            dt = dt.replace(tzinfo=tz)
+        return dt
+    except Exception:
+        return None
 
 
 def observe(state: AgentState) -> AgentState:
@@ -22,6 +57,15 @@ def observe(state: AgentState) -> AgentState:
     medications = state.get("medications") or []
     inventory = state.get("inventory") or []
     vitals = state.get("vitals") or []
+
+    # Enrich medications with next_dose_at from timings and current_time
+    meds_with_next = []
+    for m in medications:
+        m = dict(m)
+        timings = m.get("timings") or ["08:00"]
+        m["next_dose_at"] = _next_dose_at(timings, current_time)
+        meds_with_next.append(m)
+    medications = meds_with_next
 
     # Due medicines: medications that are due at or before current_time
     due_medicines = _due_medicines(medications, current_time)
@@ -52,32 +96,33 @@ def observe(state: AgentState) -> AgentState:
         observations.append("abnormal_vitals:none")
 
     logger.info("observer: observations=%s", observations)
-    return {**state, "observations": observations}
+    return {**state, "observations": observations, "medications": medications}
 
 
 def _due_medicines(medications: list[dict], current_time: Any) -> list[str]:
-    """Names of medications due at or before current_time."""
+    """Names of medications with a scheduled dose at or before current_time (dose time has arrived)."""
     names: list[str] = []
-    for m in medications:
-        name = m.get("name") or m.get("id") or "unknown"
-        # Placeholder: if next_dose_at exists and is <= current_time, consider due
-        next_at = m.get("next_dose_at") or m.get("next_dose")
-        if next_at is not None and current_time is not None:
-            try:
-                from datetime import datetime
-                if isinstance(next_at, datetime):
-                    if next_at <= current_time:
-                        names.append(str(name))
-                elif isinstance(next_at, str):
-                    dt = datetime.fromisoformat(next_at.replace("Z", "+00:00"))
-                    if dt <= current_time:
-                        names.append(str(name))
-            except Exception:
-                pass
-        # If no schedule info, treat as due when medication exists (placeholder)
-        elif not names and medications:
-            names.append(str(name))
-            break
+    if current_time is None:
+        return names
+    try:
+        today = current_time.date() if hasattr(current_time, "date") else date.today()
+        now_dt = current_time if isinstance(current_time, datetime) else datetime.combine(today, dt_time(current_time.hour, current_time.minute, 0))
+        tz = getattr(current_time, "tzinfo", None)
+        for m in medications:
+            name = m.get("name") or m.get("id") or "unknown"
+            timings = m.get("timings") or ["08:00"]
+            for t in timings:
+                parts = str(t).strip().split(":")
+                h = int(parts[0]) if len(parts) >= 1 and parts[0].isdigit() else 8
+                minu = int(parts[1]) if len(parts) >= 2 and parts[1].isdigit() else 0
+                scheduled = datetime.combine(today, dt_time(h, minu, 0))
+                if tz:
+                    scheduled = scheduled.replace(tzinfo=tz)
+                if scheduled <= now_dt:
+                    names.append(str(name))
+                    break
+    except Exception:
+        pass
     return names
 
 

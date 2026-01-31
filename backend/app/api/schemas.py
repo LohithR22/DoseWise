@@ -8,11 +8,12 @@ from pydantic import BaseModel, Field
 
 # --- Setup ---
 class MedicationSetupItem(BaseModel):
-    """Single medication in setup payload."""
+    """Single medication: times (e.g. 8am, 8pm) and take with food."""
     name: str
     dosage: str
-    time: Optional[str] = "08:00"
-    frequency: Optional[str] = "Daily"
+    quantity: Optional[int] = 30 # Default initial stock
+    times: List[str] = Field(default_factory=lambda: ["08:00"])  # e.g. ["08:00", "20:00"]
+    take_with_food: Optional[str] = "anytime"  # "before", "after", "anytime"
 
 
 class MedicationSetupRequest(BaseModel):
@@ -21,6 +22,12 @@ class MedicationSetupRequest(BaseModel):
     age: Optional[str] = None
     conditions: Optional[str] = None
     medications: List[MedicationSetupItem] = Field(default_factory=list)
+
+
+# --- Agent run (device time) ---
+class AgentRunRequest(BaseModel):
+    """Optional body for POST /agent/run."""
+    current_time: Optional[datetime] = None  # Device current time (ISO string accepted)
 
 
 # --- Dose confirmation ---
@@ -39,6 +46,9 @@ class VitalsSubmissionRequest(BaseModel):
     blood_pressure: Optional[str] = None
     temperature: Optional[float] = None
     recorded_at: Optional[datetime] = None
+    feeling: Optional[str] = None  # Wellbeing: how patient feels (e.g. "well", "unwell")
+    wellbeing: Optional[str] = None
+    mood: Optional[str] = None
     # Allow extra fields for flexibility (e.g. type, value, metric)
     class Config:
         extra = "allow"
