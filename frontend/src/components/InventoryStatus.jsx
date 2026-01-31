@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 
-export default function InventoryStatus({ inventory = [] }) {
+export default function InventoryStatus({ inventory = [], onInventoryUpdate }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [selectedMed, setSelectedMed] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateMed, setUpdateMed] = useState(null);
+  const [newQuantity, setNewQuantity] = useState('');
 
   // Transform backend inventory format to display format
   const items = inventory.length > 0
@@ -47,6 +50,40 @@ export default function InventoryStatus({ inventory = [] }) {
     setSelectedMed(null);
   };
 
+  const handleUpdateStock = (medName, currentQty) => {
+    setUpdateMed(medName);
+    setNewQuantity(currentQty.toString());
+    setShowUpdateModal(true);
+  };
+
+  const handleCloseUpdateModal = () => {
+    setShowUpdateModal(false);
+    setUpdateMed(null);
+    setNewQuantity('');
+  };
+
+  const handleSubmitUpdate = async () => {
+    if (!newQuantity || isNaN(newQuantity) || parseInt(newQuantity) < 0) {
+      alert('Please enter a valid quantity (0 or greater)');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.updateInventory(updateMed, parseInt(newQuantity));
+      handleCloseUpdateModal();
+      // Trigger parent refresh
+      if (onInventoryUpdate) {
+        onInventoryUpdate();
+      }
+    } catch (error) {
+      console.error('Failed to update inventory:', error);
+      alert('Failed to update inventory. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="inventory-status card">
       <ul className="inventory-list">
@@ -69,17 +106,25 @@ export default function InventoryStatus({ inventory = [] }) {
                   style={{ width: `${percentage}%`, backgroundColor: color }}
                 ></div>
               </div>
-              {isLow && (
-                <div className="low-stock-actions">
-                  <span className="low-stock-warning">⚠️ Low Stock - Refill soon</span>
-                  <button
-                    className="btn-buy-now"
-                    onClick={() => handleBuyNow(item.name)}
-                  >
-                    Buy Now 🛒
-                  </button>
-                </div>
-              )}
+              <div className="inventory-actions">
+                {isLow && (
+                  <div className="low-stock-actions">
+                    <span className="low-stock-warning">⚠️ Low Stock - Refill soon</span>
+                    <button
+                      className="btn-buy-now"
+                      onClick={() => handleBuyNow(item.name)}
+                    >
+                      Buy Now 🛒
+                    </button>
+                  </div>
+                )}
+                <button
+                  className="btn-update-stock"
+                  onClick={() => handleUpdateStock(item.name, item.count)}
+                >
+                  Update Stock 📦
+                </button>
+              </div>
             </li>
           );
         })}
@@ -119,6 +164,39 @@ export default function InventoryStatus({ inventory = [] }) {
               ) : (
                 <p>No online purchasing options found. Please check local pharmacy.</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUpdateModal && (
+        <div className="modal-overlay" onClick={handleCloseUpdateModal}>
+          <div className="modal-content update-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Update Stock - {updateMed}</h3>
+              <button className="btn-close" onClick={handleCloseUpdateModal}>&times;</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="update-form">
+                <label htmlFor="quantity-input">New Quantity:</label>
+                <input
+                  id="quantity-input"
+                  type="number"
+                  min="0"
+                  value={newQuantity}
+                  onChange={(e) => setNewQuantity(e.target.value)}
+                  placeholder="Enter quantity"
+                  autoFocus
+                />
+                <button
+                  className="btn-submit-update"
+                  onClick={handleSubmitUpdate}
+                  disabled={loading}
+                >
+                  {loading ? 'Updating...' : 'Update Stock'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -271,6 +349,70 @@ export default function InventoryStatus({ inventory = [] }) {
             text-align: center;
             padding: 2rem;
             color: #64748b;
+        }
+        .inventory-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .btn-update-stock {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-update-stock:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+        .update-modal {
+            max-width: 400px;
+        }
+        .update-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .update-form label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .update-form input {
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .update-form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .btn-submit-update {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-submit-update:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        .btn-submit-update:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
       `}</style>
     </div>

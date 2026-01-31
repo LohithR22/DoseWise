@@ -130,10 +130,18 @@ const api = {
     return response.data;
   },
 
-  // --- Pharmacy Search ---
   searchPharmacy: async (medicationName) => {
     const response = await apiClient.post('/pharmacy/search', {
       medication_name: medicationName
+    });
+    return response.data;
+  },
+
+  // --- Inventory Update ---
+  updateInventory: async (medicationName, quantity) => {
+    const response = await apiClient.post('/inventory/update', {
+      medication_name: medicationName,
+      quantity: quantity
     });
     return response.data;
   },

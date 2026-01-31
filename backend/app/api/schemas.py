@@ -69,3 +69,10 @@ class AgentStateResponse(BaseModel):
     plan: Optional[str] = None
     action_log: List[Any] = Field(default_factory=list)
     alerts: List[str] = Field(default_factory=list)
+
+
+# --- Inventory Update ---
+class InventoryUpdateRequest(BaseModel):
+    """Request body for POST /inventory/update."""
+    medication_name: str = Field(..., description="Name of the medication to update")
+    quantity: int = Field(..., ge=0, description="New quantity (must be >= 0)")

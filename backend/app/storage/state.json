@@ -1,5 +1,5 @@
 {
-  "current_time": "2026-01-31T14:33:26.714000+05:30",
+  "current_time": "2026-01-31T16:00:57.157000+05:30",
   "medications": [
     {
       "name": "Dolo",
@@ -13,8 +13,8 @@
       ],
       "before_after_food": "after",
       "pill_image": null,
-      "created_at": "2026-01-31T14:21:29.144260",
-      "updated_at": "2026-01-31T14:21:29.145279"
+      "created_at": "2026-01-31T15:28:33.428479",
+      "updated_at": "2026-01-31T15:28:33.428479"
     },
     {
       "name": "Antacid",
@@ -25,8 +25,8 @@
       ],
       "before_after_food": "before",
       "pill_image": null,
-      "created_at": "2026-01-31T14:21:29.145279",
-      "updated_at": "2026-01-31T14:21:29.145279"
+      "created_at": "2026-01-31T15:28:33.428479",
+      "updated_at": "2026-01-31T15:28:33.428479"
     },
     {
       "name": "prolomet",
@@ -37,38 +37,58 @@
       ],
       "before_after_food": "after",
       "pill_image": null,
-      "created_at": "2026-01-31T14:21:29.145279",
-      "updated_at": "2026-01-31T14:21:29.145279",
-      "last_taken_at": "2026-01-31T08:51:34.471576"
+      "created_at": "2026-01-31T15:28:33.428479",
+      "updated_at": "2026-01-31T15:28:33.428479",
+      "last_taken_at": "2026-01-31T09:58:46.832169"
+    },
+    {
+      "name": "paracetomol",
+      "dosage": "10",
+      "timings": [
+        "08:00"
+      ],
+      "before_after_food": "anytime",
+      "pill_image": null,
+      "created_at": "2026-01-31T15:28:33.428479",
+      "updated_at": "2026-01-31T15:28:33.428479"
     }
   ],
   "inventory": [
     {
       "med_name": "Antacid",
-      "quantity": 24,
+      "quantity": 22,
       "low_stock_threshold": 10,
-      "last_updated": "2026-01-31T14:21:34.471576",
-      "last_refilled": "2026-01-31T14:21:34.471576",
+      "last_updated": "2026-01-31T15:28:46.833684",
+      "last_refilled": "2026-01-31T15:28:46.833684",
       "is_low_stock": false,
       "status": "well_stocked"
     },
     {
       "med_name": "Dolo",
-      "quantity": 25,
+      "quantity": 21,
       "low_stock_threshold": 10,
-      "last_updated": "2026-01-31T14:21:34.471576",
-      "last_refilled": "2026-01-31T14:21:34.471576",
+      "last_updated": "2026-01-31T15:28:46.833684",
+      "last_refilled": "2026-01-31T15:28:46.833684",
       "is_low_stock": false,
       "status": "well_stocked"
     },
     {
       "med_name": "prolomet",
-      "quantity": 1,
+      "quantity": 9,
       "low_stock_threshold": 10,
-      "last_updated": "2026-01-31T14:21:34.471576",
-      "last_refilled": "2026-01-31T14:21:34.471576",
+      "last_updated": "2026-01-31T15:28:46.833684",
+      "last_refilled": "2026-01-31T15:28:46.833684",
       "is_low_stock": true,
       "status": "low_stock"
+    },
+    {
+      "med_name": "paracetomol",
+      "quantity": 28,
+      "low_stock_threshold": 10,
+      "last_updated": "2026-01-31T15:28:46.833684",
+      "last_refilled": "2026-01-31T15:28:46.833684",
+      "is_low_stock": false,
+      "status": "well_stocked"
     }
   ],
   "vitals": [
@@ -98,6 +118,20 @@
       "temperature": 42.0,
       "feeling": "unwell",
       "recorded_at": "2026-01-31T07:15:56.464522"
+    },
+    {
+      "heart_rate": 200,
+      "blood_pressure": "80/55",
+      "temperature": 42.0,
+      "feeling": "tired",
+      "recorded_at": "2026-01-31T09:48:43.907788"
+    },
+    {
+      "heart_rate": 200,
+      "blood_pressure": "80/55",
+      "temperature": 45.0,
+      "feeling": "ok",
+      "recorded_at": "2026-01-31T09:51:40.661710"
     }
   ],
   "observations": [],
@@ -106,9 +140,9 @@
   "action_log": [],
   "alerts": [],
   "patient_profile": {
-    "name": "Lohith",
-    "age": "70",
-    "conditions": "Heart condition and high sugar"
+    "name": "Sanjay",
+    "age": "75",
+    "conditions": "diabetes"
   },
   "wellbeing_log": [
     {
@@ -122,6 +156,14 @@
     {
       "feeling": "unwell",
       "recorded_at": "2026-01-31T07:15:56.464522"
+    },
+    {
+      "feeling": "tired",
+      "recorded_at": "2026-01-31T09:48:43.907788"
+    },
+    {
+      "feeling": "ok",
+      "recorded_at": "2026-01-31T09:51:40.661710"
     }
   ],
   "trend_alerts": [],

@@ -135,10 +135,20 @@ export default function Caregiver() {
               {latestBp ? `BP: ${latestBp}` : ''} {latestSugar ? `Sugar: ${latestSugar}` : ''}
             </div>
           </div>
-          {/* Inventory Status Card */}
           <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
             <h3>Medication Inventory</h3>
-            <InventoryStatus inventory={dashboard?.inventory || []} />
+            <InventoryStatus
+              inventory={dashboard?.inventory || []}
+              onInventoryUpdate={async () => {
+                // Reload dashboard data after inventory update
+                try {
+                  const data = await api.getCaregiverDashboard();
+                  setDashboard(data);
+                } catch (e) {
+                  console.error('Failed to reload dashboard:', e);
+                }
+              }}
+            />
           </div>
           {/* Medication Timeline Card */}
           <div className="stat-card" style={{ gridColumn: '1 / -1' }}>

@@ -22,7 +22,7 @@ def _get_model():
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        _gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+        _gemini_model = genai.GenerativeModel("gemini-2.5-flash")
         return _gemini_model
     except Exception as e:
         logger.warning("Gemini not available: %s", e)

@@ -17,6 +17,7 @@ from app.agent.state import AgentState, create_initial_state
 from app.api.schemas import (
     AgentRunRequest,
     DoseConfirmationRequest,
+    InventoryUpdateRequest,
     MedicationSetupRequest,
     VitalsSubmissionRequest,
 )
@@ -346,6 +347,39 @@ async def dose_confirm(body: DoseConfirmationRequest) -> dict:
             schedule_mgr.add_medication_schedule(medication_name, timings, start_date=taken_at)
             break
     schedule_mgr.mark_dose_taken(medication_name, scheduled_time, taken_at=taken_at)
+    
+    # Check if dose was taken late and send email alert
+    try:
+        from app.notifications.email_service import get_email_service
+        from datetime import time as dt_time
+        
+        # Parse scheduled time
+        scheduled_parts = scheduled_time.split(":")
+        scheduled_hour = int(scheduled_parts[0]) if len(scheduled_parts) >= 1 else 0
+        scheduled_minute = int(scheduled_parts[1]) if len(scheduled_parts) >= 2 else 0
+        
+        # Create scheduled datetime for today
+        today = taken_at.date() if hasattr(taken_at, "date") else datetime.now().date()
+        scheduled_dt = datetime.combine(today, dt_time(scheduled_hour, scheduled_minute))
+        
+        # If taken time has timezone, add it to scheduled time
+        if hasattr(taken_at, "tzinfo") and taken_at.tzinfo:
+            scheduled_dt = scheduled_dt.replace(tzinfo=taken_at.tzinfo)
+        
+        # Calculate delay in hours
+        delay = (taken_at - scheduled_dt).total_seconds() / 3600
+        
+        # If dose is more than 2 hours late, send alert
+        if delay > 2:
+            email_service = get_email_service()
+            email_service.send_missed_dose_alert(
+                medication_name=medication_name,
+                scheduled_time=scheduled_time
+            )
+    except Exception as e:
+        # Don't fail dose confirmation if email fails
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to send missed dose email: {e}")
 
     for m in state.get("medications") or []:
         if (m.get("name") or m.get("id")) == medication_name:
@@ -400,6 +434,64 @@ async def vitals_submit(body: VitalsSubmissionRequest) -> dict:
         entry["recorded_at"] = entry["recorded_at"].isoformat()
     vitals.append(entry)
     state["vitals"] = vitals
+    
+    # Check for abnormal vitals and send email alert
+    try:
+        from app.notifications.email_service import get_email_service
+        email_service = get_email_service()
+        
+        # Check each vital sign
+        bp = entry.get("blood_pressure")
+        hr = entry.get("heart_rate")
+        temp = entry.get("temperature")
+        
+        if bp:
+            # Parse blood pressure (format: "120/80")
+            try:
+                systolic, diastolic = map(int, str(bp).split("/"))
+                if systolic < 90 or systolic > 160:
+                    email_service.send_abnormal_vitals_alert(
+                        vital_type="Blood Pressure (Systolic)",
+                        value=f"{systolic} mmHg",
+                        normal_range="90-160 mmHg"
+                    )
+                if diastolic < 60 or diastolic > 100:
+                    email_service.send_abnormal_vitals_alert(
+                        vital_type="Blood Pressure (Diastolic)",
+                        value=f"{diastolic} mmHg",
+                        normal_range="60-100 mmHg"
+                    )
+            except (ValueError, AttributeError):
+                pass
+        
+        if hr:
+            try:
+                heart_rate = float(hr)
+                if heart_rate < 50 or heart_rate > 120:
+                    email_service.send_abnormal_vitals_alert(
+                        vital_type="Heart Rate",
+                        value=f"{heart_rate} bpm",
+                        normal_range="50-120 bpm"
+                    )
+            except (ValueError, TypeError):
+                pass
+        
+        if temp:
+            try:
+                temperature = float(temp)
+                if temperature < 36.0 or temperature > 38.0:
+                    email_service.send_abnormal_vitals_alert(
+                        vital_type="Temperature",
+                        value=f"{temperature}°C",
+                        normal_range="36.0-38.0°C"
+                    )
+            except (ValueError, TypeError):
+                pass
+    except Exception as e:
+        # Don't fail vitals submission if email fails
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to send abnormal vitals email: {e}")
+    
     # Wellbeing (how patient feels) for trend analyzer
     feeling = entry.get("feeling") or entry.get("wellbeing") or entry.get("mood")
     if feeling is not None:
@@ -725,3 +817,41 @@ async def search_pharmacy(body: PharmacySearchRequest) -> dict:
         user_location=body.location
     )
     return {"results": results}
+
+
+# --- Inventory Update ---
+@router.post("/inventory/update")
+async def update_inventory(body: InventoryUpdateRequest) -> dict:
+    """Update medication inventory quantity."""
+    state = load_state()
+    inventory = state.get("inventory") or []
+    
+    # Find the medication in inventory
+    found = False
+    for item in inventory:
+        med_name = item.get("med_name") or item.get("name") or item.get("id")
+        if med_name == body.medication_name:
+            item["quantity"] = body.quantity
+            item["last_updated"] = datetime.utcnow().isoformat()
+            found = True
+            break
+    
+    if not found:
+        # Create new inventory entry if medication not found
+        inventory.append({
+            "med_name": body.medication_name,
+            "quantity": body.quantity,
+            "low_stock_threshold": 10,
+            "last_updated": datetime.utcnow().isoformat()
+        })
+    
+    state["inventory"] = inventory
+    save_state(state)
+    
+    return {
+        "message": f"Inventory updated for {body.medication_name}",
+        "medication_name": body.medication_name,
+        "new_quantity": body.quantity,
+        "inventory": inventory
+    }
+

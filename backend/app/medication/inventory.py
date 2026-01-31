@@ -99,6 +99,21 @@ class InventoryManager:
         
         self._log_transaction(med_name, "decrement", old_quantity, item.quantity, f"Dose taken (-{amount})")
         
+        # Send email alert if inventory is now low
+        if item.quantity <= item.low_stock_threshold and old_quantity > item.low_stock_threshold:
+            try:
+                from app.notifications.email_service import get_email_service
+                email_service = get_email_service()
+                email_service.send_low_inventory_alert(
+                    medication_name=med_name,
+                    current_quantity=item.quantity,
+                    threshold=item.low_stock_threshold
+                )
+            except Exception as e:
+                # Don't fail the operation if email fails
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to send low inventory email: {e}")
+        
         return item.quantity
     
     def increment(self, med_name: str, amount: int) -> int:
